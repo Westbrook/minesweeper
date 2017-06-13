@@ -6,7 +6,6 @@
     <style>
       :host {
         display: block;
-        flex-grow: 1;
         min-width: var(--minesweeper-square-size, 25px);
         height: var(--minesweeper-square-size, 25px);
         line-height: var(--minesweeper-square-size, 25px);
@@ -18,25 +17,30 @@
         height: 100%;
         border: 4px outset;
         background: #cecece;
-        color: red;
         font-weight: bold;
         font-family: monospace;
         font-size: 2em;
       }
-      .square[played] {
+      .played {
         border: 1px solid #999;
       }
-      .square[played][mine] {
-        background: red;
-      }
-      [level="1"] {
+      .low {
         color: blue;
       }
-      [level="2"] {
+      .medium {
         color: green;
       }
+      .large {
+        color: red;
+      }
+      .worry {
+        color: darkred;
+      }
+      .dead {
+        background: red;
+      }
     </style>
-    <div class="square" on-tap="play" level$="[[_dangerLevel(played, mine, neighbors)]]" played$=[[played]] mine$=[[mine]]>
+    <div class$="square [[_display(played, mine, neighbors)]]" on-tap="play">
       [[_dangerLevel(played, mine, neighbors)]]
     </div>
   </template>
@@ -73,11 +77,28 @@
           }
         };
       }
+
+      _display(played, mine, neighbors) {
+          var dangerLevel = this._dangerLevel(played, mine, neighbors);
+          if (!played) return false;
+          if (mine) return 'played dead';
+          if (dangerLevel > 5) {
+            return 'played worry';
+          } else if (dangerLevel > 2) {
+            return 'played large';
+          } else if (dangerLevel > 1) {
+            return 'played medium';
+          } else {
+            return 'played low';
+          }
+      }
+
       _dangerLevel(played, mine, neighbors) {
         if (!played) return '';
         if (mine) return 'X';
         return neighbors || '';
       }
+
       play() {
         this.played = true;
       }

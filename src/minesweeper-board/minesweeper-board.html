@@ -1,0 +1,113 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../minesweeper-square/minesweeper-square.html">
+
+<dom-module id="minesweeper-board">
+  <template>
+    <style>
+      :host {
+        display: flex;
+        flex-grow: 1;
+        flex-wrap: wrap;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+    </style>
+    <dom-repeat items="{{_board}}" index-as="across" as="column">
+      <template>
+        <dom-repeat items="{{column}}" as="square" index-as="down">
+          <template>
+            <minesweeper-square
+              mine="[[square.mine]]"
+              played="{{square.played}}"
+              on-played-changed="_played"
+              column="[[across]]"
+              row="[[down]]"
+              neighbors="[[square.neighbors]]"
+            ></minesweeper-square>
+          </template>
+        </dom-repeat>
+      </template>
+    </dom-repeat>
+  </template>
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class MinesweeperBoard extends Polymer.Element {
+      static get is() { return 'minesweeper-board'; }
+      static get properties() {
+        return {
+          board: {
+            type: Array,
+            value: function () {
+              return [];
+            },
+            observer: '_boardChanged'
+          },
+          _board: {
+            type: Array,
+            value: function () {
+              return [];
+            }
+          },
+        };
+      }
+
+      _boardChanged(board) {
+        var across = board.length;
+        var down;
+        while (across) {
+          across--;
+          down = board[across].length;
+          while(down) {
+            down--;
+            board[across][down].neighbors = this._getNeighboringMines(board, across, down);
+          }
+        }
+        this._board = board;
+      }
+
+      _getNeighboringMines(board, across, down) {
+        var neighbors = 0;
+        for (var i = across - 1; i <= across + 1; i++) {
+          if (i < 0 || i == board.length) continue;
+          for (var j = down - 1; j <= down + 1; j++) {
+            if (j < 0 || j == board[i].length) continue;
+            if (i == across && j == down) continue;
+            if (board[i][j].mine) {
+              neighbors++;
+            }
+          }
+        }
+        return neighbors;
+      }
+
+      _playNeighbors(across, down) {
+        for (var i = across - 1; i <= across + 1; i++) {
+          if (i < 0 || i == this._board.length) continue;
+          for (var j = down - 1; j <= down + 1; j++) {
+            if (j < 0 || j == this._board[i].length) continue;
+            if (!this._board[i][j].mine && !this._board[i][j].played) {
+              this.set(['_board', i, j, 'played'], true);
+              if (this._board[i][j].neighbors === 0) this._playNeighbors(i, j);
+            }
+          }
+        }
+      }
+
+      _played(e) {
+        if (e.detail.value == true) {
+          var column = e.target.column;
+          var row = e.target.row;
+          if (this._board[column][row].neighbors === 0) this._playNeighbors(column, row);
+          if (this._board[column][row].mine) {
+            this.dispatchEvent(new CustomEvent('minesweeper-game-over', {bubbles: true, composed: true}));
+          }
+        }
+      }
+    }
+
+    window.customElements.define(MinesweeperBoard.is, MinesweeperBoard);
+  </script>
+</dom-module>
