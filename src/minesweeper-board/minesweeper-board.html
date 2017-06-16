@@ -90,7 +90,7 @@
             if (j < 0 || j == this._board[i].length) continue;
             if (!this._board[i][j].mine && !this._board[i][j].played) {
               this.set(['_board', i, j, 'played'], true);
-              if (this._board[i][j].neighbors === 0) this._playNeighbors(i, j);
+              if (!this._board[i][j].neighbors) this._playNeighbors(i, j);
             }
           }
         }
@@ -100,7 +100,7 @@
         if (e.detail.value == true) {
           var column = e.target.column;
           var row = e.target.row;
-          if (this._board[column][row].neighbors === 0) this._playNeighbors(column, row);
+          if (!this._board[column][row].neighbors) this._playNeighbors(column, row);
           if (this._board[column][row].mine) {
             this.dispatchEvent(new CustomEvent('minesweeper-game-over', {bubbles: true, composed: true}));
           }
