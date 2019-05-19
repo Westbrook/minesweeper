@@ -1,7 +1,0 @@
-{
-  "name": "minesweeper",
-  "short_name": "minesweeper",
-  "description": "A game of minesweeper as a web app.",
-  "start_url": "/",
-  "display": "standalone"
-}
