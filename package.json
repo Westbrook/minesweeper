@@ -20,6 +20,7 @@
     "storybook": "start-storybook -p 9001",
     "storybook:build": "build-storybook -o _site -s storybook-static",
     "build": "rimraf dist && rollup -c rollup.config.js",
+    "postbuild": "cp sw.js dist/",
     "start:build": "http-server dist -o -c-1",
     "watch:build": "rimraf dist && rollup --watch -c rollup.config.js & http-server dist -o -c-1",
     "predeploy": "yarn build",
