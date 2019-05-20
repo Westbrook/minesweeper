@@ -3,21 +3,60 @@ import { LitElement, html } from 'lit-element';
 import './minesweeper-board.js';
 import './minesweeper-menu.js';
 
+/*!
+ * Copyright 2015 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+/*
+ * @see https://developers.google.com/web/updates/2015/08/using-requestidlecallback
+ */
+window.requestIdleCallback =
+  window.requestIdleCallback ||
+  function(cb) {
+    return setTimeout(() => {
+      const start = Date.now();
+      cb({
+        didTimeout: false,
+        timeRemaining() {
+          return Math.max(0, 50 - (Date.now() - start));
+        },
+      });
+    }, 1);
+  };
+
+window.cancelIdleCallback =
+  window.cancelIdleCallback ||
+  function(id) {
+    clearTimeout(id);
+  };
+
 class MinesweeperApp extends LitElement {
-	static get properties() {
-		return {
-			width: { type: Number },
-			height: { type: Number },
+  static get properties() {
+    return {
+      width: { type: Number },
+      height: { type: Number },
       board: { type: Array },
       difficulty: { type: Number },
       squareSize: { type: Number },
-		};
-	}
+    };
+  }
 
   constructor() {
     super();
-		this.width = 0;
-		this.height = 0;
+    this.width = 0;
+    this.height = 0;
     this.board = [];
     this.difficulty = 5;
     this.squareSize = 50;
@@ -25,8 +64,8 @@ class MinesweeperApp extends LitElement {
   }
 
   measure() {
-    var width = this.offsetWidth;
-    var height = this.offsetHeight;
+    const width = this.offsetWidth;
+    const height = this.offsetHeight;
     this.width = width;
     this.height = height;
     this.startNewGame();
@@ -39,16 +78,16 @@ class MinesweeperApp extends LitElement {
   createBoard() {
     let across = Math.floor(this.width / this.squareSize);
     let down = Math.floor(this.height / this.squareSize);
-    let downCount = down;
-    let board = Array(across);
+    const downCount = down;
+    const board = Array(across);
     this.style.setProperty('--columns', across);
     this.style.setProperty('--rows', down);
     while (across) {
-      across--;
+      across -= 1;
       board[across] = Array(down);
       down = downCount;
       while (down) {
-        down--;
+        down -= 1;
         board[across][down] = this._setSquare();
       }
     }
@@ -56,12 +95,12 @@ class MinesweeperApp extends LitElement {
   }
 
   _setSquare() {
-    let isMine = Math.round(Math.random() * 100);
-    let square = {
+    const isMine = Math.round(Math.random() * 100);
+    const square = {
       mine: isMine <= this.difficulty * 4,
       played: false,
       marked: false,
-    }
+    };
     return square;
   }
 
@@ -75,8 +114,8 @@ class MinesweeperApp extends LitElement {
     }
   }
 
-	render() {
-		return html`
+  render() {
+    return html`
       <style>
         :host {
           display: flex;
@@ -95,8 +134,8 @@ class MinesweeperApp extends LitElement {
         .board=${this.board}
         @minesweeper-game-over=${this._gameOver}
       ></minesweeper-board>
-		`;
-	}
+    `;
+  }
 }
 
 customElements.define('minesweeper-app', MinesweeperApp);
