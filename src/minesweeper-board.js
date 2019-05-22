@@ -5,121 +5,209 @@ import './minesweeper-square.js';
 const status = {
   DEAD: 'dead',
   PLAYING: 'playing',
-}
+};
+
+const defaultFocusedSquare = [0, 0];
 
 class MinesweeperBoard extends LitElement {
-	static get properties() {
-		return {
+  static get properties() {
+    return {
       board: { type: Array },
-      status: { type: String }
-		};
-	}
+      marks: { type: Number },
+      mines: { type: Number },
+      status: { type: String },
+      focusedSquare: { type: Array },
+    };
+  }
 
   constructor() {
     super();
     this.board = [];
+    this.marks = 0;
+    this.mines = 0;
     this.status = status.PLAYING;
+    this.focusedSquare = defaultFocusedSquare;
+    this.handleKeydown = this.handleKeydown.bind(this);
   }
 
-  _getNeighbors(board, across, down, needle) {
-    var neighbors = 0;
+  _getNeighbors(across, down, needle) {
+    let neighbors = 0;
     let square;
-    for (var i = -1; i <= 1; i++) {
-      if (!board[across + i]) continue;
-      for (var j = -1; j <= 1; j++) {
-        square = board[across + i][down + j];
-        if (!square) continue;
-        if (i === 0 && j === 0) continue;
-        if (square[needle]) {
-          neighbors++;
+    for (let i = -1; i <= 1; i += 1) {
+      if (this.board[across + i]) {
+        for (let j = -1; j <= 1; j += 1) {
+          square = this.board[across + i][down + j];
+          if (square) {
+            if (i !== 0 || j !== 0) {
+              if (square[needle]) {
+                neighbors += 1;
+              }
+            }
+          }
         }
       }
     }
     return neighbors;
   }
 
-  _getNeighboringMines(board, across, down) {
-    return this._getNeighbors(...arguments, 'mine');
+  _getNeighboringMines(...args) {
+    return this._getNeighbors(...args, 'mine');
   }
 
-  _getNeighboringMarks(board, across, down) {
-    return this._getNeighbors(...arguments, 'marked');
+  _getNeighboringMarks(...args) {
+    return this._getNeighbors(...args, 'marked');
   }
 
   _playNeighbors(across, down, unsafe) {
-    for (var i = across - 1; i <= across + 1; i++) {
-      if (i < 0 || i == this.board.length) continue;
-      for (var j = down - 1; j <= down + 1; j++) {
-        if (j < 0 || j == this.board[i].length) continue;
-        const square = this.board[i][j];
-        if ((unsafe || !square.mine) && !square.played && !square.marked) {
-          square.played = true;
-          if (square.mine) {
-            this.status = status.DEAD;
+    for (let i = across - 1; i <= across + 1; i += 1) {
+      if (this.board[i]) {
+        for (let j = down - 1; j <= down + 1; j += 1) {
+          if (this.board[i][j]) {
+            const square = this.board[i][j];
+            if ((unsafe || !square.mine) && !square.played && !square.marked) {
+              square.played = true;
+              if (square.mine) {
+                this.status = status.DEAD;
+              }
+              if (!this._getNeighboringMines(i, j)) this._playNeighbors(i, j);
+            }
           }
-          if (!this._getNeighboringMines(this.board, i, j)) this._playNeighbors(i, j);
         }
       }
     }
-    this.requestUpdate();
+    this.board = [...this.board];
   }
 
   _played(e) {
     if (this.status === status.DEAD) return;
-    var column = e.target.column;
-    var row = e.target.row;
+    const { column, row } = e.target;
     const square = this.board[column][row];
+    this.focusedSquare = [column, row];
     if (square.played) {
       const unsafe = true;
-      if (this._getNeighboringMines(this.board, column, row) === this._getNeighboringMarks(this.board, column, row)) {
+      if (this._getNeighboringMines(column, row) === this._getNeighboringMarks(column, row)) {
         this._playNeighbors(column, row, unsafe);
+      } else {
+        return;
       }
     } else if (square.mine) {
       this.status = status.DEAD;
-    } else if (!this._getNeighboringMines(this.board, column, row)) {
+    } else if (!this._getNeighboringMines(column, row)) {
       this._playNeighbors(column, row);
     }
     square.played = true;
-    this.requestUpdate();
+    this.board = [...this.board];
   }
 
   _marked(e) {
-    var column = e.target.column;
-    var row = e.target.row;
-    this.board[column][row].marked = !e.detail.marked;
-    this.requestUpdate();
+    const { column, row } = e.target;
+    const square = this.board[column][row];
+    this.focusedSquare = [column, row];
+    square.marked = !e.detail.marked;
+    this.marks += square.marked ? 1 : -1;
+    this.board = [...this.board];
   }
 
-	render() {
-		return html`
+  handleKeydown(e) {
+    let { column, row } = e.composedPath()[0].getRootNode().host;
+    const offset = e.shiftKey ? 5 : 1;
+    switch (e.key) {
+      case 'ArrowDown':
+        row = (this.board[0].length + row + offset) % this.board[0].length;
+        break;
+      case 'ArrowUp':
+        row = (this.board[0].length + row - offset) % this.board[0].length;
+        break;
+      case 'ArrowLeft':
+        column = (this.board.length + column - offset) % this.board.length;
+        break;
+      case 'ArrowRight':
+        column = (this.board.length + column + offset) % this.board.length;
+        break;
+      case 'm':
+        this.shadowRoot.querySelector(`[column="${column}"][row="${row}"]`).mark(e);
+        break;
+      default:
+        break;
+    }
+    this.focusedSquare = [column, row];
+  }
+
+  focusBoard() {
+    window.addEventListener('keydown', this.handleKeydown);
+  }
+
+  blurBoard() {
+    window.removeEventListener('keydown', this.handleKeydown);
+  }
+
+  isFocusedSquare(across, down) {
+    if (this.focusedSquare === defaultFocusedSquare) {
+      return across === 0 && down === 0;
+    }
+    return across === this.focusedSquare[0] && down === this.focusedSquare[1];
+  }
+
+  get focusedSquareSelector() {
+    const [column, row] = this.focusedSquare;
+    return `[column="${column}"][row="${row}"]`;
+  }
+
+  render() {
+    return html`
       <style>
         :host {
+          position: relative;
           display: grid;
           grid-auto-flow: column;
           grid-template-columns: repeat(var(--columns), auto);
           grid-template-rows: repeat(var(--rows), auto);
         }
+        .status {
+          position: absolute;
+          bottom: 100%;
+          right: 0;
+        }
       </style>
-      ${this.board.map((column, across) => column.map((square, down) => html`
-          <minesweeper-square
-            .column=${across}
-            .mine=${square.mine}
-            .marked=${square.marked}
-            .neighbors=${this._getNeighboringMines(this.board, across, down)}
-            .played=${square.played}
-            .row=${down}
-            @minesweeper-played=${this._played}
-            @minesweeper-marked=${this._marked}
-          ></minesweeper-square>
-      `))}
-		`;
-	}
+      <div class="status">
+        ${this.marks}/${this.mines}
+      </div>
+      ${this.board.map((column, across) =>
+        column.map(
+          (square, down) => html`
+            <minesweeper-square
+              .mine=${square.mine}
+              .marked=${square.marked}
+              .neighbors=${this._getNeighboringMines(across, down)}
+              .played=${square.played}
+              column=${across}
+              row=${down}
+              ?can-focus=${this.isFocusedSquare(across, down)}
+              @minesweeper-played=${this._played}
+              @minesweeper-marked=${this._marked}
+              @focus=${this.focusBoard}
+              @blur=${this.blurBoard}
+            ></minesweeper-square>
+          `,
+        ),
+      )}
+    `;
+  }
 
   updated(changes) {
     if (changes.has('status') && this.status === status.DEAD) {
-      this.dispatchEvent(new CustomEvent('minesweeper-game-over', {bubbles: true, composed: true}));
-    } else if (changes.has('board')) {
+      this.dispatchEvent(
+        new CustomEvent('minesweeper-game-over', { bubbles: true, composed: true }),
+      );
+    } else if (changes.has('mines')) {
+      this.marks = 0;
       this.status = status.PLAYING;
+      this.focusedSquare = defaultFocusedSquare;
+    } else {
+      const square = this.shadowRoot.querySelector(this.focusedSquareSelector);
+      square.updateComplete.then(() => {
+        square.focus();
+      });
     }
   }
 }

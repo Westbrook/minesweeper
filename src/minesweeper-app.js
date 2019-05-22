@@ -48,6 +48,12 @@ class MinesweeperApp extends LitElement {
       width: { type: Number },
       height: { type: Number },
       board: { type: Array },
+      mines: {
+        type: Number,
+        hasChanged() {
+          return false;
+        },
+      },
       difficulty: { type: Number },
       squareSize: { type: Number },
     };
@@ -58,6 +64,7 @@ class MinesweeperApp extends LitElement {
     this.width = 0;
     this.height = 0;
     this.board = [];
+    this.mines = 0;
     this.difficulty = 5;
     this.squareSize = 50;
     window.requestIdleCallback(this.measure.bind(this));
@@ -80,6 +87,7 @@ class MinesweeperApp extends LitElement {
     let down = Math.floor(this.height / this.squareSize);
     const downCount = down;
     const board = Array(across);
+    this.mines = 0;
     this.style.setProperty('--columns', across);
     this.style.setProperty('--rows', down);
     while (across) {
@@ -95,9 +103,10 @@ class MinesweeperApp extends LitElement {
   }
 
   _setSquare() {
-    const isMine = Math.round(Math.random() * 100);
+    const isMine = Math.round(Math.random() * 100) <= this.difficulty * 4;
+    if (isMine) this.mines += 1;
     const square = {
-      mine: isMine <= this.difficulty * 4,
+      mine: isMine,
       played: false,
       marked: false,
     };
@@ -132,6 +141,7 @@ class MinesweeperApp extends LitElement {
       ></minesweeper-menu>
       <minesweeper-board
         .board=${this.board}
+        .mines=${this.mines}
         @minesweeper-game-over=${this._gameOver}
       ></minesweeper-board>
     `;
