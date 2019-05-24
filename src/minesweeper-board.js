@@ -1,4 +1,4 @@
-import { LitElement, html } from 'lit-element';
+import { LitElement, html, css } from 'lit-element';
 
 import './minesweeper-square.js';
 
@@ -153,22 +153,28 @@ class MinesweeperBoard extends LitElement {
     return `[column="${column}"][row="${row}"]`;
   }
 
-  render() {
-    return html`
-      <style>
+  static get styles() {
+    return [
+      css`
         :host {
           position: relative;
           display: grid;
+          flex-grow: 1;
           grid-auto-flow: column;
-          grid-template-columns: repeat(var(--columns), auto);
-          grid-template-rows: repeat(var(--rows), auto);
+          grid-template-columns: repeat(var(--columns), 1fr);
+          grid-template-rows: repeat(var(--rows), 1fr);
         }
         .status {
           position: absolute;
           bottom: 100%;
           right: 0;
         }
-      </style>
+      `,
+    ];
+  }
+
+  render() {
+    return html`
       <div class="status">
         ${this.marks}/${this.mines}
       </div>

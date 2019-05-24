@@ -1,4 +1,4 @@
-import { LitElement, html } from 'lit-element';
+import { LitElement, html, css } from 'lit-element';
 
 import './minesweeper-board.js';
 import './minesweeper-menu.js';
@@ -67,6 +67,10 @@ class MinesweeperApp extends LitElement {
     this.mines = 0;
     this.difficulty = 5;
     this.squareSize = 50;
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
     window.requestIdleCallback(this.measure.bind(this));
   }
 
@@ -78,7 +82,10 @@ class MinesweeperApp extends LitElement {
     this.startNewGame();
   }
 
-  startNewGame() {
+  startNewGame(e = { detail: { difficulty: false } }) {
+    if (e.detail.difficulty) {
+      this.difficulty = e.detail.difficulty;
+    }
     this.createBoard();
   }
 
@@ -123,9 +130,9 @@ class MinesweeperApp extends LitElement {
     }
   }
 
-  render() {
-    return html`
-      <style>
+  static get styles() {
+    return [
+      css`
         :host {
           display: flex;
           flex-direction: column;
@@ -134,7 +141,22 @@ class MinesweeperApp extends LitElement {
 
           --minesweeper-square-size: 50px;
         }
-      </style>
+        .dark-theme {
+          --color-square-background: black;
+          --color-square-focus: neongreen;
+          --color-square-border: lightblue;
+          --color-danger-low: green;
+          --color-danger-medium: yellow;
+          --color-danger-high: orange;
+          --color-danger-worry: red;
+          --color-dead: white;
+        }
+      `,
+    ];
+  }
+
+  render() {
+    return html`
       <minesweeper-menu
         difficulty="${this.difficulty}"
         @minesweeper-new-game=${this.startNewGame}

@@ -1,4 +1,5 @@
-import { LitElement, html } from 'lit-element';
+import { LitElement, html, css } from 'lit-element';
+import { classMap } from 'lit-html/directives/class-map.js';
 
 class MinesweeperSquare extends LitElement {
   static get properties() {
@@ -21,22 +22,6 @@ class MinesweeperSquare extends LitElement {
     this.marked = false;
     this.column = 0;
     this.row = 0;
-  }
-
-  _display(played, mine, neighbors) {
-    const dangerLevel = this._dangerLevel(played, mine, neighbors);
-    if (!played) return false;
-    if (mine) return 'played dead';
-    if (dangerLevel > 5) {
-      return 'played worry';
-    }
-    if (dangerLevel > 2) {
-      return 'played large';
-    }
-    if (dangerLevel > 1) {
-      return 'played medium';
-    }
-    return 'played low';
   }
 
   _dangerLevel() {
@@ -66,13 +51,11 @@ class MinesweeperSquare extends LitElement {
     this.shadowRoot.querySelector('button').focus();
   }
 
-  render() {
-    return html`
-      <style>
+  static get styles() {
+    return [
+      css`
         :host {
-          display: block;
-          min-width: var(--minesweeper-square-size, 25px);
-          height: var(--minesweeper-square-size, 25px);
+          display: flex;
           line-height: var(--minesweeper-square-size, 25px);
           text-align: center;
         }
@@ -82,7 +65,7 @@ class MinesweeperSquare extends LitElement {
           width: 100%;
           height: 100%;
           border: 4px outset;
-          background: #cecece;
+          background: var(--color-square-background, #cecece);
           font-weight: bold;
           font-family: monospace;
           font-size: 2em;
@@ -93,38 +76,54 @@ class MinesweeperSquare extends LitElement {
         }
         .square:focus {
           transform: translateZ(0);
-          outline: 2px solid blue;
+          outline: 2px solid var(--color-square-focus, blue);
           outline-offset: -10px;
         }
         .played {
-          border: 1px solid #999;
+          border: 1px solid var(--color-square-border, #999);
         }
         .played:focus {
           outline-offset: -5px;
         }
         .low {
-          color: blue;
+          color: var(--color-danger-low, blue);
         }
         .medium {
-          color: green;
+          color: var(--color-danger-medium, green);
         }
-        .large {
-          color: red;
+        .high {
+          color: var(--color-danger-high, red);
         }
         .worry {
-          color: darkred;
+          color: var(--color-danger-worry, darkred);
         }
         .dead {
-          background: red;
+          background: var(--color-dead, red);
         }
-      </style>
+      `,
+    ];
+  }
+
+  render() {
+    const dangerLevel = this._dangerLevel();
+    return html`
       <button
-        class="square ${this._display(this.played, this.mine, this.neighbors)}"
+        class=${classMap({
+          square: true,
+          played: this.played,
+          low: !this.mine && this.played,
+          medium: !this.mine && this.played && dangerLevel > 1,
+          high: !this.mine && this.played && dangerLevel > 2,
+          worry: !this.mine && this.played && dangerLevel > 5,
+          dead: this.played && this.mine,
+        })}
         tabindex=${this.canFocus ? '0' : '-1'}
         @click=${this.play}
         @contextmenu=${this.mark}
+        aria-label=${`${this.played ? 'Played' : 'Playable'} Square: Column ${this.column +
+          1}, Row ${this.column + 1}`}
       >
-        ${this._dangerLevel(this.played, this.mine, this.neighbors, this.marked)}
+        ${dangerLevel}
       </button>
     `;
   }
