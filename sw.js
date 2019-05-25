@@ -9,4 +9,12 @@ if (workbox) {
     new RegExp('/$'),
     new workbox.strategies.NetworkFirst()
   );
+  workbox.routing.registerRoute(
+    new RegExp('/?source=pwa$'),
+    new workbox.strategies.NetworkFirst()
+  );
+  workbox.routing.registerRoute(
+    new RegExp('.*\.ico'),
+    new workbox.strategies.NetworkFirst()
+  );
 }
