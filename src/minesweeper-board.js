@@ -168,6 +168,7 @@ class MinesweeperBoard extends LitElement {
           position: absolute;
           bottom: 100%;
           right: 0;
+          line-height: 48px;
         }
       `,
     ];

@@ -1,0 +1,20 @@
+{
+  "short_name": "Maps",
+  "name": "Google Maps",
+  "start_url": "/minesweeper/?source=pwa",
+  "theme_color": "#000000",
+  "background_color": "#cccccc",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "images/icons-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "images/icons-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

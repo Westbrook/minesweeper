@@ -38,6 +38,7 @@ class MinesweeperMenu extends LitElement {
           display: flex;
           align-items: center;
           flex-shrink: 0;
+          height: 48px;
         }
       `,
     ];
