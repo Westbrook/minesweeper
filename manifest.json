@@ -1,6 +1,6 @@
 {
-  "short_name": "Maps",
-  "name": "Google Maps",
+  "short_name": "Minesweeper",
+  "name": "Minesweeper Clone",
   "start_url": "/minesweeper/?source=pwa",
   "theme_color": "#000000",
   "background_color": "#cccccc",
