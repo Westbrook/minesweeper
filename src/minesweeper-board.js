@@ -206,8 +206,8 @@ class MinesweeperBoard extends LitElement {
         column.map(
           (square, down) => html`
             <minesweeper-square
-              state=${square.state}
-              neighbors=${this.memoizedGetNeighboringMines(across, down)}
+              .state=${square.state}
+              .neighbors=${this.memoizedGetNeighboringMines(across, down)}
               column=${across}
               row=${down}
               ?can-focus=${this.isFocusedSquare(across, down)}
