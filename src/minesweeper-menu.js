@@ -32,6 +32,28 @@ class MinesweeperMenu extends LitElement {
   }
 
   static get styles() {
+    const withAdopted = css`
+      :host(:nth-last-child(1)) {
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      :host(:nth-last-child(1)) > * {
+        padding: 10px;
+      }
+    `;
+    const withoutAdopted = css`
+      :host(:nth-last-child(2)) {
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      :host(:nth-last-child(2)) > * {
+        padding: 10px;
+      }
+    `;
     return [
       css`
         :host {
@@ -41,6 +63,7 @@ class MinesweeperMenu extends LitElement {
           height: 48px;
         }
       `,
+      document.adoptedStyleSheets ? withAdopted : withoutAdopted,
     ];
   }
 

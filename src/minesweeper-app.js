@@ -33,6 +33,7 @@ class MinesweeperApp extends LitElement {
   }
 
   measure() {
+    import('./minesweeper-board.js');
     this.width = this.offsetWidth;
     this.height = this.offsetHeight;
     this.startNewGame();
@@ -111,19 +112,19 @@ class MinesweeperApp extends LitElement {
     return html`
       <minesweeper-menu
         difficulty="${this.difficulty}"
-        @minesweeper-new-game=${this.startNewGame}
+        @minesweeper-new-game=${this.measure}
       ></minesweeper-menu>
-      <minesweeper-board
-        style=${`--columns:${this.across};--rows:${this.down};`}
-        .board=${this.board}
-        .mines=${this.mines}
-        @minesweeper-game-over=${this._gameOver}
-      ></minesweeper-board>
+      ${this.across && this.down
+        ? html`
+            <minesweeper-board
+              style=${`--columns:${this.across};--rows:${this.down};`}
+              .board=${this.board}
+              .mines=${this.mines}
+              @minesweeper-game-over=${this._gameOver}
+            ></minesweeper-board>
+          `
+        : html``}
     `;
-  }
-
-  firstUpdated() {
-    import('./minesweeper-board.js').then(() => this.measure());
   }
 }
 
