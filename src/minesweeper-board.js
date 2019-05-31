@@ -1,5 +1,8 @@
 import { LitElement, html, css } from 'lit-element';
 
+import { memoize } from './memoize.js';
+import { squareTransition } from './square-machine.js';
+import { defaultBoard } from './constants.js';
 import './minesweeper-square.js';
 
 const status = {
@@ -12,6 +15,7 @@ const defaultFocusedSquare = [0, 0];
 class MinesweeperBoard extends LitElement {
   static get properties() {
     return {
+      moves: { type: Number },
       board: { type: Array },
       marks: { type: Number },
       mines: { type: Number },
@@ -22,7 +26,8 @@ class MinesweeperBoard extends LitElement {
 
   constructor() {
     super();
-    this.board = [];
+    this.board = defaultBoard;
+    this.moves = 0;
     this.marks = 0;
     this.mines = 0;
     this.status = status.PLAYING;
@@ -30,7 +35,19 @@ class MinesweeperBoard extends LitElement {
     this.handleKeydown = this.handleKeydown.bind(this);
   }
 
-  _getNeighbors(across, down, needle) {
+  get board() {
+    return this._board;
+  }
+
+  set board(board) {
+    if (board === this.board) return;
+    const old = this.board;
+    this._board = board;
+    this.memoizedGetNeighboringMines = memoize(this._getNeighboringMines.bind(this));
+    this.requestUpdate('board', old);
+  }
+
+  _getNeighbors(across, down, ...needles) {
     let neighbors = 0;
     let square;
     for (let i = -1; i <= 1; i += 1) {
@@ -39,7 +56,7 @@ class MinesweeperBoard extends LitElement {
           square = this.board[across + i][down + j];
           if (square) {
             if (i !== 0 || j !== 0) {
-              if (square[needle]) {
+              if (needles.includes(square.state)) {
                 neighbors += 1;
               }
             }
@@ -51,31 +68,35 @@ class MinesweeperBoard extends LitElement {
   }
 
   _getNeighboringMines(...args) {
-    return this._getNeighbors(...args, 'mine');
+    return this._getNeighbors(...args, 'MINE', 'MARKED_MINE', 'TRIPPED');
   }
 
   _getNeighboringMarks(...args) {
-    return this._getNeighbors(...args, 'marked');
+    return this._getNeighbors(...args, 'MARKED', 'MARKED_MINE');
   }
 
   _playNeighbors(across, down, unsafe) {
-    for (let i = across - 1; i <= across + 1; i += 1) {
-      if (this.board[i]) {
-        for (let j = down - 1; j <= down + 1; j += 1) {
-          if (this.board[i][j]) {
-            const square = this.board[i][j];
-            if ((unsafe || !square.mine) && !square.played && !square.marked) {
-              square.played = true;
-              if (square.mine) {
+    for (let i = -1; i <= 1; i += 1) {
+      if (this.board[across + i]) {
+        for (let j = -1; j <= 1; j += 1) {
+          const square = this.board[across + i][down + j];
+          if (square) {
+            if (unsafe || square.state === 'NOT_MINE') {
+              square.state = squareTransition(square.state, 'PLAYED');
+              if (square.state === 'TRIPPED') {
                 this.status = status.DEAD;
+              } else if (
+                !['MARKED', 'MARKED_MINE'].includes(square.state) &&
+                this.memoizedGetNeighboringMines(across + i, down + j) === 0
+              ) {
+                this._playNeighbors(across + i, down + j);
               }
-              if (!this._getNeighboringMines(i, j)) this._playNeighbors(i, j);
             }
           }
         }
       }
     }
-    this.board = [...this.board];
+    this.moves += 1;
   }
 
   _played(e) {
@@ -83,29 +104,31 @@ class MinesweeperBoard extends LitElement {
     const { column, row } = e.target;
     const square = this.board[column][row];
     this.focusedSquare = [column, row];
-    if (square.played) {
+    if (square.state === 'PLAYED') {
       const unsafe = true;
-      if (this._getNeighboringMines(column, row) === this._getNeighboringMarks(column, row)) {
+      if (
+        this.memoizedGetNeighboringMines(column, row) === this._getNeighboringMarks(column, row)
+      ) {
         this._playNeighbors(column, row, unsafe);
       } else {
         return;
       }
-    } else if (square.mine) {
+    } else if (square.state === 'MINE') {
       this.status = status.DEAD;
-    } else if (!this._getNeighboringMines(column, row)) {
+    } else if (!this.memoizedGetNeighboringMines(column, row)) {
       this._playNeighbors(column, row);
     }
-    square.played = true;
-    this.board = [...this.board];
+    square.state = squareTransition(square.state, 'PLAYED');
+    this.moves += 1;
   }
 
   _marked(e) {
     const { column, row } = e.target;
     const square = this.board[column][row];
     this.focusedSquare = [column, row];
-    square.marked = !e.detail.marked;
-    this.marks += square.marked ? 1 : -1;
-    this.board = [...this.board];
+    square.state = squareTransition(square.state, e.detail.marked ? 'UNMARKED' : 'MARKED');
+    this.marks += square.state === 'MARKED' || square.state === 'MARKED_MINE' ? 1 : -1;
+    this.moves += 1;
   }
 
   handleKeydown(e) {
@@ -113,16 +136,16 @@ class MinesweeperBoard extends LitElement {
     const offset = e.shiftKey ? 5 : 1;
     switch (e.key) {
       case 'ArrowDown':
-        row = (this.board[0].length + row + offset) % this.board[0].length;
+        row = this.board[0].length + row + offset;
         break;
       case 'ArrowUp':
-        row = (this.board[0].length + row - offset) % this.board[0].length;
+        row = this.board[0].length + row - offset;
         break;
       case 'ArrowLeft':
-        column = (this.board.length + column - offset) % this.board.length;
+        column = this.board.length + column - offset;
         break;
       case 'ArrowRight':
-        column = (this.board.length + column + offset) % this.board.length;
+        column = this.board.length + column + offset;
         break;
       case 'm':
         this.shadowRoot.querySelector(`[column="${column}"][row="${row}"]`).mark(e);
@@ -130,7 +153,7 @@ class MinesweeperBoard extends LitElement {
       default:
         break;
     }
-    this.focusedSquare = [column, row];
+    this.focusedSquare = [column % this.board.length, row % this.board[0].length];
   }
 
   focusBoard() {
@@ -183,10 +206,8 @@ class MinesweeperBoard extends LitElement {
         column.map(
           (square, down) => html`
             <minesweeper-square
-              .mine=${square.mine}
-              .marked=${square.marked}
-              .neighbors=${this._getNeighboringMines(across, down)}
-              .played=${square.played}
+              state=${square.state}
+              neighbors=${this.memoizedGetNeighboringMines(across, down)}
               column=${across}
               row=${down}
               ?can-focus=${this.isFocusedSquare(across, down)}

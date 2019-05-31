@@ -5,10 +5,8 @@ class MinesweeperSquare extends LitElement {
   static get properties() {
     return {
       canFocus: { type: Boolean, attribute: 'can-focus' },
-      mine: { type: Boolean },
       neighbors: { type: Number },
-      played: { type: Boolean },
-      marked: { type: Boolean },
+      state: { type: String },
       column: { type: Number },
       row: { type: Number },
     };
@@ -16,34 +14,45 @@ class MinesweeperSquare extends LitElement {
 
   constructor() {
     super();
-    this.mine = false;
+    this.state = 'INIT';
     this.neighbors = 0;
-    this.played = false;
-    this.marked = false;
     this.column = 0;
     this.row = 0;
   }
 
   _dangerLevel() {
-    if (this.marked) return 'm';
-    if (!this.played) return '';
-    if (this.mine) return 'X';
-    return this.neighbors || '';
+    switch (this.state) {
+      case 'MARKED':
+      case 'MARKED_MINE':
+        return 'm';
+      case 'TRIPPED':
+        return 'x';
+      case 'PLAYED':
+        return this.neighbors || '';
+      case 'MINE':
+      case 'NOT_MINE':
+      default:
+        return '';
+    }
   }
 
   play() {
-    if (this.marked) return;
-    this.dispatchEvent(new CustomEvent('minesweeper-played', { composed: true }));
+    if (['MARKED', 'MARKED_MINE'].includes(this.state)) return;
+    this.dispatchEvent(new CustomEvent('minesweeper-played'));
   }
 
   mark(e) {
     e.preventDefault();
-    if (this.played) {
+    if (this.state === 'PLAYED') {
       this.play();
       return;
     }
     this.dispatchEvent(
-      new CustomEvent('minesweeper-marked', { composed: true, detail: { marked: this.marked } }),
+      new CustomEvent('minesweeper-marked', {
+        detail: {
+          marked: ['MARKED', 'MARKED_MINE'].includes(this.state),
+        },
+      }),
     );
   }
 
@@ -104,24 +113,39 @@ class MinesweeperSquare extends LitElement {
     ];
   }
 
+  testDangerLevel(dangerLevel, threashold = -1) {
+    return this.state === 'PLAYED' && dangerLevel > threashold;
+  }
+
+  get squareType() {
+    switch (this.state) {
+      case 'PLAYED':
+        return 'Played';
+      case 'MARKED':
+      case 'MARKED_MINE':
+        return 'Marked';
+      default:
+        return 'Playable';
+    }
+  }
+
   render() {
     const dangerLevel = this._dangerLevel();
     return html`
       <button
         class=${classMap({
           square: true,
-          played: this.played,
-          low: !this.mine && this.played,
-          medium: !this.mine && this.played && dangerLevel > 1,
-          high: !this.mine && this.played && dangerLevel > 2,
-          worry: !this.mine && this.played && dangerLevel > 5,
-          dead: this.played && this.mine,
+          played: ['PLAYED', 'TRIPPED'].includes(this.state),
+          low: this.testDangerLevel(dangerLevel),
+          medium: this.testDangerLevel(dangerLevel, 1),
+          high: this.testDangerLevel(dangerLevel, 2),
+          worry: this.testDangerLevel(dangerLevel, 5),
+          dead: this.state === 'TRIPPED',
         })}
         tabindex=${this.canFocus ? '0' : '-1'}
         @click=${this.play}
         @contextmenu=${this.mark}
-        aria-label=${`${this.played ? 'Played' : 'Playable'} Square: Column ${this.column +
-          1}, Row ${this.column + 1}`}
+        aria-label=${`${this.squareType} Square: Column ${this.column + 1}, Row ${this.column + 1}`}
       >
         ${dangerLevel}
       </button>

@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit-element';
 
-const difficultyLevels = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+const difficultyLevels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 class MinesweeperMenu extends LitElement {
   static get properties() {
@@ -52,7 +52,7 @@ class MinesweeperMenu extends LitElement {
         <select @change=${this._changeDifficulty}>
           <option disabled>Select Difficulty</option>
           ${difficultyLevels.map(
-            (_, level) => html`
+            level => html`
               <option value=${level + 1} ?selected=${this.difficulty === level + 1}
                 >${level + 1}</option
               >
