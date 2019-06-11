@@ -49,17 +49,22 @@ class MinesweeperBoard extends LitElement {
 
   _getNeighbors(across, down, ...needles) {
     let neighbors = 0;
-    let square;
+    this._doNeighbors(across, down, (square) => {
+      if (needles.includes(square.state)) {
+        neighbors += 1;
+      }
+    });
+    return neighbors;
+  }
+
+  _doNeighbors(across, down, cb) {
+    const neighbors = 0;
     for (let i = -1; i <= 1; i += 1) {
       if (this.board[across + i]) {
         for (let j = -1; j <= 1; j += 1) {
-          square = this.board[across + i][down + j];
-          if (square) {
-            if (i !== 0 || j !== 0) {
-              if (needles.includes(square.state)) {
-                neighbors += 1;
-              }
-            }
+          const square = this.board[across + i][down + j];
+          if (square && (i !== 0 || j !== 0)) {
+            cb(square, i, j);
           }
         }
       }
@@ -76,26 +81,19 @@ class MinesweeperBoard extends LitElement {
   }
 
   _playNeighbors(across, down, unsafe) {
-    for (let i = -1; i <= 1; i += 1) {
-      if (this.board[across + i]) {
-        for (let j = -1; j <= 1; j += 1) {
-          const square = this.board[across + i][down + j];
-          if (square) {
-            if (unsafe || square.state === 'NOT_MINE') {
-              square.state = squareTransition(square.state, 'PLAYED');
-              if (square.state === 'TRIPPED') {
-                this.status = status.DEAD;
-              } else if (
-                !['MARKED', 'MARKED_MINE'].includes(square.state) &&
-                this.memoizedGetNeighboringMines(across + i, down + j) === 0
-              ) {
-                this._playNeighbors(across + i, down + j);
-              }
-            }
-          }
+    this._doNeighbors(across, down, (square, i, j) => {
+      if (unsafe || square.state === 'NOT_MINE') {
+        square.state = squareTransition(square.state, 'PLAYED');
+        if (square.state === 'TRIPPED') {
+          this.status = status.DEAD;
+        } else if (
+          !['MARKED', 'MARKED_MINE'].includes(square.state) &&
+          this.memoizedGetNeighboringMines(across + i, down + j) === 0
+        ) {
+          this._playNeighbors(across + i, down + j);
         }
       }
-    }
+    });
     this.moves += 1;
   }
 

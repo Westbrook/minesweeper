@@ -32,7 +32,7 @@ class MinesweeperMenu extends LitElement {
   }
 
   static get styles() {
-    const withAdopted = css`
+    const withoutStyleTag = css`
       :host(:nth-last-child(1)) {
         height: 100%;
         flex-direction: column;
@@ -43,7 +43,7 @@ class MinesweeperMenu extends LitElement {
         padding: 10px;
       }
     `;
-    const withoutAdopted = css`
+    const withStyleTag = css`
       :host(:nth-last-child(2)) {
         height: 100%;
         flex-direction: column;
@@ -63,7 +63,7 @@ class MinesweeperMenu extends LitElement {
           height: 48px;
         }
       `,
-      document.adoptedStyleSheets ? withAdopted : withoutAdopted,
+      (typeof ShadyCSS !== 'undefined') || document.adoptedStyleSheets ? withoutStyleTag : withStyleTag,
     ];
   }
 
