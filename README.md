@@ -1,6 +1,6 @@
 # \<minesweeper-app\>
 
-A game of minesweeper as a web app.
+The game of minesweeper as a web app with super high load performance, even on a Moto G4 with Slow 3G: https://webpagetest.org/result/200404_Z4_f836b0bd3220f1c0f7a4122491a675ef/
 
 ## Getting Started
 
