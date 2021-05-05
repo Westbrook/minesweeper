@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit-element';
+import { LitElement, html, css } from 'lit';
 
 const difficultyLevels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -63,7 +63,9 @@ class MinesweeperMenu extends LitElement {
           height: 48px;
         }
       `,
-      (typeof ShadyCSS !== 'undefined') || document.adoptedStyleSheets ? withoutStyleTag : withStyleTag,
+      typeof ShadyCSS !== 'undefined' || document.adoptedStyleSheets
+        ? withoutStyleTag
+        : withStyleTag,
     ];
   }
 

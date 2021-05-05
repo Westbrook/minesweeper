@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit-element';
+import { LitElement, html, css } from 'lit';
 
 import { defaultBoard } from './constants.js';
 import './minesweeper-menu.js';
@@ -33,6 +33,7 @@ class MinesweeperApp extends LitElement {
   }
 
   measure() {
+    // eslint-disable-next-line no-unused-expressions
     import('./minesweeper-board.js');
     this.width = this.offsetWidth;
     this.height = this.offsetHeight;
@@ -78,6 +79,7 @@ class MinesweeperApp extends LitElement {
   }
 
   _requestNewGame() {
+    // eslint-disable-next-line no-alert
     if (window.confirm('Game Over.\n\n\nStart a new game?')) {
       this.startNewGame();
     }

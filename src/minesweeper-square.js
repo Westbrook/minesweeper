@@ -1,11 +1,11 @@
-import { LitElement, html, css } from 'lit-element';
-import { classMap } from 'lit-html/directives/class-map.js';
+import { LitElement, html, css } from 'lit';
+import { classMap } from 'lit/directives/class-map.js';
 
 class MinesweeperSquare extends LitElement {
   static get properties() {
     return {
       canFocus: { type: Boolean, attribute: 'can-focus' },
-      neighbors: { type: Number },
+      neighbors: { type: Map },
       state: { type: String },
       column: { type: Number },
       row: { type: Number },

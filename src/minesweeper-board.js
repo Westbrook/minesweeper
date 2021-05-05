@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit-element';
+import { LitElement, html, css } from 'lit';
 
 import { memoize } from './memoize.js';
 import { squareTransition } from './square-machine.js';
@@ -49,7 +49,7 @@ class MinesweeperBoard extends LitElement {
 
   _getNeighbors(across, down, ...needles) {
     let neighbors = 0;
-    this._doNeighbors(across, down, (square) => {
+    this._doNeighbors(across, down, square => {
       if (needles.includes(square.state)) {
         neighbors += 1;
       }
@@ -83,6 +83,7 @@ class MinesweeperBoard extends LitElement {
   _playNeighbors(across, down, unsafe) {
     this._doNeighbors(across, down, (square, i, j) => {
       if (unsafe || square.state === 'NOT_MINE') {
+        // eslint-disable-next-line no-param-reassign
         square.state = squareTransition(square.state, 'PLAYED');
         if (square.state === 'TRIPPED') {
           this.status = status.DEAD;
